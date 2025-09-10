@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Brain, Heart, Users, Clock, Award, BookOpen, Target, CheckCircle, MessageCircle } from "lucide-react"
+import Link from "next/link" // Added Link import for navigation
 
 export default function HomePage() {
   const [scrollY, setScrollY] = useState(0)
@@ -54,7 +55,7 @@ export default function HomePage() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Brain className="h-8 w-8 text-primary" />
-            <h1 className="text-2xl font-bold text-primary">Salud Mental Modernna</h1>
+            <h1 className="text-2xl font-bold text-primary">Salud Mental Moderna</h1>
           </div>
           <nav className="hidden md:flex items-center space-x-6">
             <button
@@ -87,7 +88,9 @@ export default function HomePage() {
             >
               Antecedentes
             </button>
-            <Button className="bg-accent hover:bg-accent/90">Contacto</Button>
+            <Link href="/contact">
+              <Button className="bg-accent hover:bg-accent/90">Contacto</Button>
+            </Link>
           </nav>
         </div>
       </header>
@@ -109,18 +112,24 @@ export default function HomePage() {
           }}
         />
         <div className="relative z-10 text-center max-w-4xl mx-auto px-4">
-          <h2 className="text-5xl md:text-7xl font-bold text-primary mb-6 text-balance">Salud Mental Modernna</h2>
+          <h2 className="text-5xl md:text-7xl font-bold text-primary mb-6 text-balance">Salud Mental Moderna</h2>
           <p className="text-xl md:text-2xl text-muted-foreground mb-8 text-pretty max-w-3xl mx-auto">
             Trascendemos fronteras en la búsqueda incansable de una salud mental integral y duradera. Fusionamos la
             ciencia de vanguardia con la calidez humana.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-primary hover:bg-primary/90 text-lg px-8 py-3">
+            <Button
+              size="lg"
+              className="bg-primary hover:bg-primary/90 text-lg px-8 py-3"
+              onClick={() => scrollToSection("servicios")}
+            >
               Conocer Servicios
             </Button>
-            <Button size="lg" variant="outline" className="text-lg px-8 py-3 bg-transparent">
-              Agendar Consulta
-            </Button>
+            <Link href="/contact">
+              <Button size="lg" variant="outline" className="text-lg px-8 py-3 bg-transparent">
+                Agendar Consulta
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
@@ -450,12 +459,16 @@ export default function HomePage() {
             Cada paso que damos es una apuesta por el bienestar, el crecimiento y la transformación que mereces.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-primary hover:bg-primary/90 text-lg px-8 py-3">
-              Agendar Consulta
-            </Button>
-            <Button size="lg" variant="outline" className="text-lg px-8 py-3 bg-transparent">
-              Más Información
-            </Button>
+            <Link href="/contact">
+              <Button size="lg" className="bg-primary hover:bg-primary/90 text-lg px-8 py-3">
+                Agendar Consulta
+              </Button>
+            </Link>
+            <Link href="/contact">
+              <Button size="lg" variant="outline" className="text-lg px-8 py-3 bg-transparent">
+                Más Información
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
@@ -467,7 +480,7 @@ export default function HomePage() {
             <div>
               <div className="flex items-center space-x-2 mb-4">
                 <Brain className="h-6 w-6" />
-                <h4 className="text-xl font-semibold">Salud Mental Modernna</h4>
+                <h4 className="text-xl font-semibold">Salud Mental Moderna</h4>
               </div>
               <p className="text-primary-foreground/80">
                 Fusionando ciencia de vanguardia con calidez humana para tu bienestar integral.
@@ -491,21 +504,23 @@ export default function HomePage() {
             </div>
           </div>
           <div className="border-t border-primary-foreground/20 mt-8 pt-8 text-center text-primary-foreground/60">
-            <p>&copy; 2025 Salud Mental Modernna. Todos los derechos reservados.</p>
+            <p>&copy; 2025 Salud Mental Moderna. Todos los derechos reservados.</p>
           </div>
         </div>
       </footer>
-      {/* WhatsApp Floating Button */}
-        <div className="fixed bottom-6 right-6 z-50">
-  <Button
-    size="lg"
-    className="bg-green-500 hover:bg-green-600 text-white rounded-full w-14 h-14 p-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110"
-    aria-label="Contactar por WhatsApp"
-  >
-    <MessageCircle className="h-6 w-6" />
-  </Button>
-</div>
 
+      {/* WhatsApp Floating Button */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <Link href="/contact">
+          <Button
+            size="lg"
+            className="bg-green-500 hover:bg-green-600 text-white rounded-full w-14 h-14 p-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110"
+            aria-label="Contactar por WhatsApp"
+          >
+            <MessageCircle className="h-6 w-6" />
+          </Button>
+        </Link>
+      </div>
     </div>
   )
 }
