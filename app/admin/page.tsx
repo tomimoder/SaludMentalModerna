@@ -1,0 +1,430 @@
+"use client"
+
+import type React from "react"
+
+import { useState, useEffect } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Star, Check, X, Trash2, MessageSquare, Users, BarChart3, Lock } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+
+interface Testimonial {
+  id: number
+  name: string
+  email: string
+  message: string
+  rating: number
+  approved: number
+  created_at: string
+}
+
+interface Question {
+  id: number
+  question: string
+  answer: string | null
+  category: string
+  frequency: number
+  is_faq: number
+  created_at: string
+}
+
+export default function AdminPage() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [password, setPassword] = useState("")
+  const [loginError, setLoginError] = useState("")
+
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([])
+  const [questions, setQuestions] = useState<Question[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null)
+  const [answerText, setAnswerText] = useState("")
+
+  useEffect(() => {
+    const authStatus = localStorage.getItem("admin_authenticated")
+    if (authStatus === "true") {
+      setIsAuthenticated(true)
+      fetchData()
+    } else {
+      setIsLoading(false)
+    }
+  }, [])
+
+const handleLogin = async (e: React.FormEvent) => {
+  e.preventDefault()
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password })
+    })
+
+    if (!res.ok) throw new Error('Contraseña incorrecta')
+
+    setIsAuthenticated(true)
+    setLoginError("")
+    fetchData()
+  } catch (err: any) {
+    setLoginError(err.message)
+  }
+}
+
+
+  const handleLogout = () => {
+    setIsAuthenticated(false)
+    localStorage.removeItem("admin_authenticated")
+    setPassword("")
+  }
+
+  const fetchData = async () => {
+    try {
+      const [testimonialsRes, questionsRes] = await Promise.all([
+        fetch("/api/admin/testimonials"),
+        fetch("/api/admin/questions"),
+      ])
+
+      if (testimonialsRes.ok) {
+        const testimonialsData = await testimonialsRes.json()
+        setTestimonials(testimonialsData)
+      }
+
+      if (questionsRes.ok) {
+        const questionsData = await questionsRes.json()
+        setQuestions(questionsData)
+      }
+    } catch (error) {
+      console.error("Error fetching admin data:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleTestimonialApproval = async (id: number, approved: boolean) => {
+    try {
+      const response = await fetch("/api/admin/testimonials", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, approved }),
+      })
+
+      if (response.ok) {
+        setTestimonials(testimonials.map((t) => (t.id === id ? { ...t, approved: approved ? 1 : 0 } : t)))
+      }
+    } catch (error) {
+      console.error("Error updating testimonial:", error)
+    }
+  }
+
+  const handleDeleteTestimonial = async (id: number) => {
+    if (!confirm("¿Estás seguro de que quieres eliminar este testimonio?")) return
+
+    try {
+      const response = await fetch("/api/admin/testimonials", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      })
+
+      if (response.ok) {
+        setTestimonials(testimonials.filter((t) => t.id !== id))
+      }
+    } catch (error) {
+      console.error("Error deleting testimonial:", error)
+    }
+  }
+
+  const handleAnswerQuestion = async () => {
+    if (!selectedQuestion || !answerText.trim()) return
+
+    try {
+      const response = await fetch("/api/admin/questions", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: selectedQuestion.id,
+          answer: answerText,
+          is_faq: true,
+        }),
+      })
+
+      if (response.ok) {
+        setQuestions(questions.map((q) => (q.id === selectedQuestion.id ? { ...q, answer: answerText, is_faq: 1 } : q)))
+        setSelectedQuestion(null)
+        setAnswerText("")
+      }
+    } catch (error) {
+      console.error("Error answering question:", error)
+    }
+  }
+
+  const handleDeleteQuestion = async (id: number) => {
+    if (!confirm("¿Estás seguro de que quieres eliminar esta pregunta?")) return
+
+    try {
+      const response = await fetch("/api/admin/questions", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      })
+
+      if (response.ok) {
+        setQuestions(questions.filter((q) => q.id !== id))
+      }
+    } catch (error) {
+      console.error("Error deleting question:", error)
+    }
+  }
+
+  const renderStars = (rating: number) => {
+    return Array.from({ length: 5 }, (_, i) => (
+      <Star key={i} className={`w-4 h-4 ${i < rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`} />
+    ))
+  }
+
+  const stats = {
+    totalTestimonials: testimonials.length,
+    approvedTestimonials: testimonials.filter((t) => t.approved === 1).length,
+    pendingTestimonials: testimonials.filter((t) => t.approved === 0).length,
+    totalQuestions: questions.length,
+    answeredQuestions: questions.filter((q) => q.answer).length,
+    unansweredQuestions: questions.filter((q) => !q.answer).length,
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+              <Lock className="w-6 h-6 text-blue-600" />
+            </div>
+            <CardTitle className="text-2xl">Acceso Administrativo</CardTitle>
+            <p className="text-gray-600">Ingresa la contraseña para continuar</p>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <Input
+                  type="password"
+                  placeholder="Contraseña"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full"
+                />
+                {loginError && <p className="text-red-500 text-sm mt-2">{loginError}</p>}
+              </div>
+              <Button type="submit" className="w-full">
+                Ingresar
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-300 rounded w-64 mb-8"></div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="h-32 bg-gray-300 rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-8 flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Panel de Administración</h1>
+          <p className="text-gray-600">Gestiona testimonios y preguntas frecuentes</p>
+        </div>
+        <Button variant="outline" onClick={handleLogout}>
+          Cerrar Sesión
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Testimonios</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalTestimonials}</div>
+            <p className="text-xs text-muted-foreground">
+              {stats.approvedTestimonials} aprobados, {stats.pendingTestimonials} pendientes
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Preguntas</CardTitle>
+            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalQuestions}</div>
+            <p className="text-xs text-muted-foreground">
+              {stats.answeredQuestions} respondidas, {stats.unansweredQuestions} pendientes
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">FAQ Activas</CardTitle>
+            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{questions.filter((q) => q.is_faq === 1).length}</div>
+            <p className="text-xs text-muted-foreground">Preguntas frecuentes publicadas</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Tabs defaultValue="testimonials" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="testimonials">Testimonios</TabsTrigger>
+          <TabsTrigger value="questions">Preguntas</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="testimonials" className="space-y-4">
+          {testimonials.map((testimonial) => (
+            <Card key={testimonial.id}>
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div>
+                      <h3 className="font-semibold">{testimonial.name}</h3>
+                      <p className="text-sm text-gray-500">{testimonial.email}</p>
+                    </div>
+                    <div className="flex gap-1">{renderStars(testimonial.rating)}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={testimonial.approved ? "default" : "secondary"}>
+                      {testimonial.approved ? "Aprobado" : "Pendiente"}
+                    </Badge>
+                    <span className="text-sm text-gray-500">
+                      {new Date(testimonial.created_at).toLocaleDateString("es-ES")}
+                    </span>
+                  </div>
+                </div>
+
+                <p className="text-gray-700 mb-4 leading-relaxed">{testimonial.message}</p>
+
+                <div className="flex gap-2">
+                  {testimonial.approved === 0 && (
+                    <Button
+                      size="sm"
+                      onClick={() => handleTestimonialApproval(testimonial.id, true)}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <Check className="w-4 h-4 mr-1" />
+                      Aprobar
+                    </Button>
+                  )}
+                  {testimonial.approved === 1 && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleTestimonialApproval(testimonial.id, false)}
+                    >
+                      <X className="w-4 h-4 mr-1" />
+                      Desaprobar
+                    </Button>
+                  )}
+                  <Button size="sm" variant="destructive" onClick={() => handleDeleteTestimonial(testimonial.id)}>
+                    <Trash2 className="w-4 h-4 mr-1" />
+                    Eliminar
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </TabsContent>
+
+        <TabsContent value="questions" className="space-y-4">
+          {questions.map((question) => (
+            <Card key={question.id}>
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <h3 className="font-semibold mb-2">{question.question}</h3>
+                    {question.answer && (
+                      <div className="bg-blue-50 p-3 rounded-lg mb-3">
+                        <p className="text-sm text-blue-900">{question.answer}</p>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 ml-4">
+                    <Badge variant="outline">{question.category}</Badge>
+                    <Badge variant="secondary">Freq: {question.frequency}</Badge>
+                    {question.is_faq === 1 && <Badge className="bg-green-100 text-green-800">FAQ</Badge>}
+                    <span className="text-sm text-gray-500">
+                      {new Date(question.created_at).toLocaleDateString("es-ES")}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setSelectedQuestion(question)
+                          setAnswerText(question.answer || "")
+                        }}
+                      >
+                        {question.answer ? "Editar respuesta" : "Responder"}
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Responder pregunta</DialogTitle>
+                        <DialogDescription>{question.question}</DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <Textarea
+                          placeholder="Escribe la respuesta..."
+                          value={answerText}
+                          onChange={(e) => setAnswerText(e.target.value)}
+                          rows={4}
+                        />
+                        <Button onClick={handleAnswerQuestion} className="w-full">
+                          {question.answer ? "Actualizar respuesta" : "Publicar respuesta"}
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+
+                  <Button size="sm" variant="destructive" onClick={() => handleDeleteQuestion(question.id)}>
+                    <Trash2 className="w-4 h-4 mr-1" />
+                    Eliminar
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </TabsContent>
+      </Tabs>
+    </div>
+  )
+}

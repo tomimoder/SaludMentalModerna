@@ -6,6 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Brain, Heart, Users, Clock, Award, BookOpen, Target, CheckCircle, MessageCircle } from "lucide-react"
 import Link from "next/link" // Added Link import for navigation
+import  {TestimonialsSection}  from "../components/testimonials-section"
+import  {FAQSection}  from "@/components/faq-section"
+
 
 export default function HomePage() {
   const [scrollY, setScrollY] = useState(0)
@@ -133,6 +136,12 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Testimonials Section */}
+      <TestimonialsSection />
+
+      {/* FAQ Section */}
+      <FAQSection />
 
       {/* Mission Section */}
       <section className="py-20 bg-card">
@@ -459,7 +468,7 @@ export default function HomePage() {
             Cada paso que damos es una apuesta por el bienestar, el crecimiento y la transformación que mereces.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/contact">
+            <Link href="/agenda">
               <Button size="lg" className="bg-primary hover:bg-primary/90 text-lg px-8 py-3">
                 Agendar Consulta
               </Button>
