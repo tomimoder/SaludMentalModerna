@@ -19,6 +19,15 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 
+// Select component for choosing therapists when adding availability
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select"
+
 interface Testimonial {
   id: number
   name: string
@@ -38,14 +47,53 @@ interface Question {
   is_faq: number
   created_at: string
 }
+interface Answer {
+  id: number
+  question_id: number
+  answer: string
+  author_name: string
+  author_email: string | null
+  created_at: string
+  is_approved: number
+  question: string
+}
+
+interface Therapist {
+  id: number
+  name: string
+}
+
+interface Consulta {
+  id: number
+  nombre: string
+  email: string
+  telefono: string
+  motivo_consulta: string
+  fecha_creacion: string
+  estado: "pendiente" | "contactado" | "agendado" | "completado"
+  notas: string | null
+  fecha_contacto: string | null
+}
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [password, setPassword] = useState("")
   const [loginError, setLoginError] = useState("")
-
+  const [answers, setAnswers] = useState<Answer[]>([])
   const [testimonials, setTestimonials] = useState<Testimonial[]>([])
   const [questions, setQuestions] = useState<Question[]>([])
+
+  // Estado para terapeutas, consultas de contacto y disponibilidad
+  const [therapists, setTherapists] = useState<Therapist[]>([])
+  const [consultas, setConsultas] = useState<Consulta[]>([])
+  const [newAvailability, setNewAvailability] = useState({
+    therapistId: "",
+    date: "",
+    startTime: "",
+    endTime: "",
+  })
+  const [selectedConsulta, setSelectedConsulta] = useState<Consulta | null>(null)
+  const [notasText, setNotasText] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null)
   const [answerText, setAnswerText] = useState("")
@@ -60,25 +108,24 @@ export default function AdminPage() {
     }
   }, [])
 
-const handleLogin = async (e: React.FormEvent) => {
-  e.preventDefault()
-  try {
-    const res = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password })
-    })
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+      })
 
-    if (!res.ok) throw new Error('Contraseña incorrecta')
+      if (!res.ok) throw new Error('Contraseña incorrecta')
 
-    setIsAuthenticated(true)
-    setLoginError("")
-    fetchData()
-  } catch (err: any) {
-    setLoginError(err.message)
+      setIsAuthenticated(true)
+      setLoginError("")
+      fetchData()
+    } catch (err: any) {
+      setLoginError(err.message)
+    }
   }
-}
-
 
   const handleLogout = () => {
     setIsAuthenticated(false)
@@ -88,9 +135,10 @@ const handleLogin = async (e: React.FormEvent) => {
 
   const fetchData = async () => {
     try {
-      const [testimonialsRes, questionsRes] = await Promise.all([
+      const [testimonialsRes, questionsRes, answersRes] = await Promise.all([
         fetch("/api/admin/testimonials"),
         fetch("/api/admin/questions"),
+        fetch('/api/admin/answers'),
       ])
 
       if (testimonialsRes.ok) {
@@ -101,6 +149,25 @@ const handleLogin = async (e: React.FormEvent) => {
       if (questionsRes.ok) {
         const questionsData = await questionsRes.json()
         setQuestions(questionsData)
+      }
+
+      if (answersRes.ok) {
+        const answersData = await answersRes.json()
+        setAnswers(answersData)
+      }
+
+      // Cargar terapeutas y consultas de contacto para las nuevas secciones del panel
+      const [therapistsRes, consultasRes] = await Promise.all([
+        fetch('/api/admin/therapists'),
+        fetch('/api/admin/consultas'),
+      ])
+      if (therapistsRes.ok) {
+        const therapistsData = await therapistsRes.json()
+        setTherapists(therapistsData)
+      }
+      if (consultasRes.ok) {
+        const consultasData = await consultasRes.json()
+        setConsultas(consultasData)
       }
     } catch (error) {
       console.error("Error fetching admin data:", error)
@@ -140,6 +207,107 @@ const handleLogin = async (e: React.FormEvent) => {
       }
     } catch (error) {
       console.error("Error deleting testimonial:", error)
+    }
+  }
+
+  const handleDeleteAnswer = async (id: number) => {
+    if (!confirm("¿Estás seguro de que quieres eliminar esta respuesta?")) return
+
+    try {
+      const response = await fetch('/api/admin/answers', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      })
+      if (response.ok) {
+        alert('Respuesta eliminada correctamente')
+        setAnswers((prev) => prev.filter((ans) => ans.id !== id))
+      } else {
+        alert('Error al eliminar la respuesta')
+      }
+    } catch (error) {
+      console.error('Error deleting answer:', error)
+      alert('Error al eliminar la respuesta')
+    }
+  }
+
+  // Maneja el envío de nueva disponibilidad de terapeutas
+  const handleAddAvailability = async () => {
+    const { therapistId, date, startTime, endTime } = newAvailability
+    if (!therapistId || !date || !startTime || !endTime) return
+    try {
+      const response = await fetch('/api/admin/availability', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          therapist_id: Number(therapistId),
+          date,
+          start_time: startTime,
+          end_time: endTime,
+        }),
+      })
+      if (response.ok) {
+        alert('Disponibilidad agregada correctamente')
+        setNewAvailability({ therapistId: '', date: '', startTime: '', endTime: '' })
+      } else {
+        alert('Error al agregar disponibilidad')
+      }
+    } catch (error) {
+      console.error('Error adding availability:', error)
+      alert('Error al agregar disponibilidad')
+    }
+  }
+
+  // Maneja la respuesta a una consulta de contacto
+const handleRespondConsulta = async () => {
+  if (!selectedConsulta || !notasText.trim()) return
+  try {
+    const response = await fetch('/api/admin/consultas', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: selectedConsulta.id,
+        notas: notasText,
+        estado: 'contactado', // o 'agendado'/'completado' según el flujo
+      }),
+    })
+    if (response.ok) {
+      setConsultas((prev) =>
+        prev.map((c) =>
+          c.id === selectedConsulta.id
+            ? { ...c, notas: notasText, estado: 'contactado', fecha_contacto: new Date().toISOString() }
+            : c,
+        ),
+      )
+      setSelectedConsulta(null)
+      setNotasText('')
+    } else {
+      alert('Error al actualizar la consulta')
+    }
+  } catch (error) {
+    console.error('Error responding consulta:', error)
+    alert('Error al actualizar la consulta')
+  }
+}
+
+
+  // Elimina una consulta de contacto
+  const handleDeleteConsulta = async (id: number) => {
+    if (!confirm('¿Estás seguro de que quieres eliminar esta consulta?')) return
+    try {
+      const response = await fetch('/api/admin/consultas', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      })
+      if (response.ok) {
+        setConsultas((prev) => prev.filter((c) => c.id !== id))
+      } else {
+        alert('Error al eliminar la consulta')
+      }
+    } catch (error) {
+      console.error('Error deleting consulta:', error)
+      alert('Error al eliminar la consulta')
     }
   }
 
@@ -303,6 +471,8 @@ const handleLogin = async (e: React.FormEvent) => {
         <TabsList>
           <TabsTrigger value="testimonials">Testimonios</TabsTrigger>
           <TabsTrigger value="questions">Preguntas</TabsTrigger>
+          <TabsTrigger value="availability">Disponibilidad</TabsTrigger>
+          <TabsTrigger value="consultas">Consultas</TabsTrigger>
         </TabsList>
 
         <TabsContent value="testimonials" className="space-y-4">
@@ -424,6 +594,144 @@ const handleLogin = async (e: React.FormEvent) => {
             </Card>
           ))}
         </TabsContent>
+
+        {/* Sección para agregar disponibilidad de terapeutas */}
+        <TabsContent value="availability" className="space-y-4">
+          <Card>
+            <CardContent className="p-6 space-y-4">
+              <h3 className="text-lg font-semibold">Agregar Disponibilidad</h3>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                {/* Selección de terapeuta */}
+                <Select
+                  onValueChange={(value) => setNewAvailability({ ...newAvailability, therapistId: value })}
+                  value={newAvailability.therapistId}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona un terapeuta" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {therapists.map((t) => (
+                      <SelectItem key={t.id} value={String(t.id)}>
+                        {t.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Fecha de disponibilidad */}
+                <Input
+                  type="date"
+                  value={newAvailability.date}
+                  onChange={(e) => setNewAvailability({ ...newAvailability, date: e.target.value })}
+                />
+
+                {/* Hora de inicio */}
+                <Input
+                  type="time"
+                  value={newAvailability.startTime}
+                  onChange={(e) => setNewAvailability({ ...newAvailability, startTime: e.target.value })}
+                />
+
+                {/* Hora de fin */}
+                <Input
+                  type="time"
+                  value={newAvailability.endTime}
+                  onChange={(e) => setNewAvailability({ ...newAvailability, endTime: e.target.value })}
+                />
+              </div>
+              <Button onClick={handleAddAvailability}>Agregar Disponibilidad</Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Sección para gestionar consultas del formulario de contacto */}
+<TabsContent value="consultas" className="space-y-4">
+  {consultas.length === 0 && (
+    <p className="text-gray-600">No hay consultas pendientes.</p>
+  )}
+  {consultas.map((consulta) => (
+    <Card key={consulta.id}>
+      <CardContent className="p-6">
+        <div className="flex flex-col md:flex-row justify-between mb-4">
+          <div className="flex-1">
+            <h3 className="font-semibold mb-1">{consulta.nombre}</h3>
+            <p className="text-sm text-gray-500 mb-1">
+              {consulta.email} | {consulta.telefono}
+            </p>
+            <p className="mb-2 text-gray-700">{consulta.motivo_consulta}</p>
+            <p className="text-xs text-gray-500">
+              {new Date(consulta.fecha_creacion).toLocaleDateString("es-ES")}
+            </p>
+
+            {/* Mostrar notas si existen */}
+            {consulta.notas && (
+              <div className="mt-2 bg-green-50 p-3 rounded">
+                <p className="text-sm text-green-800">
+                  <strong>Notas:</strong> {consulta.notas}
+                </p>
+              </div>
+            )}
+
+            {/* Mostrar estado actual */}
+            <Badge className="mt-2">{consulta.estado}</Badge>
+
+            {/* Mostrar fecha de contacto si existe */}
+            {consulta.fecha_contacto && (
+              <p className="text-xs text-gray-400 mt-1">
+                Contactado el:{" "}
+                {new Date(consulta.fecha_contacto).toLocaleDateString("es-ES")}
+              </p>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-2 mt-4 md:mt-0 md:ml-4">
+            {consulta.estado === "pendiente" && (
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setSelectedConsulta(consulta)
+                      setNotasText(consulta.notas || "")
+                    }}
+                  >
+                    Añadir notas / Contactar
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Gestionar consulta</DialogTitle>
+                    <DialogDescription>{consulta.motivo_consulta}</DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <Textarea
+                      placeholder="Escribe las notas..."
+                      value={notasText}
+                      onChange={(e) => setNotasText(e.target.value)}
+                      rows={4}
+                    />
+                    <Button onClick={handleRespondConsulta} className="w-full">
+                      Guardar y marcar como contactado
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
+
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => handleDeleteConsulta(consulta.id)}
+            >
+              Eliminar
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  ))}
+</TabsContent>
+
       </Tabs>
     </div>
   )

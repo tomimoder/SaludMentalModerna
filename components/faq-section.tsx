@@ -156,26 +156,6 @@ export function FAQSection() {
     }
   }
 
-  const handleDeleteAnswer = async (answerId: number, questionId: number) => {
-    if (!confirm("¿Estás seguro de que quieres eliminar esta respuesta?")) return
-
-    try {
-      const response = await fetch(`/api/questions/answers?answerId=${answerId}`, {
-        method: "DELETE",
-      })
-
-      if (response.ok) {
-        alert("Respuesta eliminada correctamente")
-        fetchUserAnswers(questionId)
-      } else {
-        alert("Error al eliminar la respuesta")
-      }
-    } catch (error) {
-      console.error("Error deleting answer:", error)
-      alert("Error al eliminar la respuesta")
-    }
-  }
-
   const filteredFAQs = faqs.filter(
     (faq) =>
       faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -311,17 +291,6 @@ export function FAQSection() {
                               <p className="text-gray-700 text-sm leading-relaxed mb-2">{answer.answer}</p>
                               <div className="flex items-center justify-between text-xs text-gray-500">
                                 <span>Por: {answer.author_name}</span>
-                                <div className="flex items-center gap-2">
-                                  <span>{new Date(answer.created_at).toLocaleDateString("es-ES")}</span>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleDeleteAnswer(answer.id, faq.id)}
-                                    className="text-red-500 hover:text-red-700 h-6 px-2"
-                                  >
-                                    <Trash className="w-4 h-4" />
-                                  </Button>
-                                </div>
                               </div>
                             </div>
                           ))}

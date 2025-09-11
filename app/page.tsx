@@ -30,7 +30,7 @@ export default function HomePage() {
 
   useEffect(() => {
     const handleScrollSpy = () => {
-      const sections = ["servicios", "metodologia", "antecedentes"]
+      const sections = ["servicios", "metodologia", "antecedentes", "testimonios", "FAQ"]
       const scrollPosition = window.scrollY + 100
 
       for (const section of sections) {
@@ -80,6 +80,26 @@ export default function HomePage() {
               }`}
             >
               Metodología
+            </button>
+            <button
+              onClick={() => scrollToSection("testimonios")}
+              className={`px-4 py-2 rounded-md transition-all ${
+                activeSection === "testimonios"
+                  ? "bg-purple-600 text-white font-semibold"
+                  : "text-foreground hover:text-primary hover:bg-muted"
+              }`}
+            >
+              Testimonios
+            </button>
+            <button
+              onClick={() => scrollToSection("FAQ")}
+              className={`px-4 py-2 rounded-md transition-all ${
+                activeSection === "FAQ"
+                  ? "bg-purple-600 text-white font-semibold"
+                  : "text-foreground hover:text-primary hover:bg-muted"
+              }`}
+            >
+              Preguntas Frecuentes
             </button>
             <button
               onClick={() => scrollToSection("antecedentes")}
@@ -136,12 +156,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
-      {/* Testimonials Section */}
-      <TestimonialsSection />
-
-      {/* FAQ Section */}
-      <FAQSection />
 
       {/* Mission Section */}
       <section className="py-20 bg-card">
@@ -371,6 +385,16 @@ export default function HomePage() {
             </div>
           </div>
         </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section id="testimonios" className="py-20">
+      <TestimonialsSection />
+      </section>
+
+      {/* FAQ Section */}
+      <section id="FAQ" className="py-20">
+      <FAQSection />
       </section>
 
       {/* Professional Background */}
