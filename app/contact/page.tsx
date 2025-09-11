@@ -28,9 +28,9 @@ export default function ContactPage() {
       <section className="py-16 px-6">
         <div className="container mx-auto max-w-4xl">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4 text-foreground">Solicita tu Cita</h2>
+            <h2 className="text-4xl font-bold mb-4 text-foreground">Ayudanos a resolver tus dudas</h2>
             <p className="text-lg text-muted-foreground text-pretty">
-              Completa el formulario y nos pondremos en contacto contigo para agendar tu primera consulta.
+              Completa el formulario y nos pondremos en contacto contigo para poder resolver todo tipo de duas que tengas.
             </p>
           </div>
           <ContactForm />

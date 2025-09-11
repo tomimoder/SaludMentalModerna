@@ -125,7 +125,7 @@ export default function HomePage() {
             >
               Conocer Servicios
             </Button>
-            <Link href="/contact">
+            <Link href="/agenda">
               <Button size="lg" variant="outline" className="text-lg px-8 py-3 bg-transparent">
                 Agendar Consulta
               </Button>
