@@ -6,8 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Brain, Heart, Users, Clock, Award, BookOpen, Target, CheckCircle, MessageCircle } from "lucide-react"
 import Link from "next/link" // Added Link import for navigation
-import  {TestimonialsSection}  from "../components/testimonials-section"
-import  {FAQSection}  from "@/components/faq-section"
+import { TestimonialsSection } from "../components/testimonials-section"
+import { FAQSection } from "@/components/faq-section"
 
 
 export default function HomePage() {
@@ -63,51 +63,46 @@ export default function HomePage() {
           <nav className="hidden md:flex items-center space-x-6">
             <button
               onClick={() => scrollToSection("servicios")}
-              className={`px-4 py-2 rounded-md transition-all ${
-                activeSection === "servicios"
+              className={`px-4 py-2 rounded-md transition-all ${activeSection === "servicios"
                   ? "bg-purple-600 text-white font-semibold"
                   : "text-foreground hover:text-primary hover:bg-muted"
-              }`}
+                }`}
             >
               Servicios
             </button>
             <button
               onClick={() => scrollToSection("metodologia")}
-              className={`px-4 py-2 rounded-md transition-all ${
-                activeSection === "metodologia"
+              className={`px-4 py-2 rounded-md transition-all ${activeSection === "metodologia"
                   ? "bg-purple-600 text-white font-semibold"
                   : "text-foreground hover:text-primary hover:bg-muted"
-              }`}
+                }`}
             >
               Metodología
             </button>
             <button
               onClick={() => scrollToSection("testimonios")}
-              className={`px-4 py-2 rounded-md transition-all ${
-                activeSection === "testimonios"
+              className={`px-4 py-2 rounded-md transition-all ${activeSection === "testimonios"
                   ? "bg-purple-600 text-white font-semibold"
                   : "text-foreground hover:text-primary hover:bg-muted"
-              }`}
+                }`}
             >
               Testimonios
             </button>
             <button
               onClick={() => scrollToSection("FAQ")}
-              className={`px-4 py-2 rounded-md transition-all ${
-                activeSection === "FAQ"
+              className={`px-4 py-2 rounded-md transition-all ${activeSection === "FAQ"
                   ? "bg-purple-600 text-white font-semibold"
                   : "text-foreground hover:text-primary hover:bg-muted"
-              }`}
+                }`}
             >
               Preguntas Frecuentes
             </button>
             <button
               onClick={() => scrollToSection("antecedentes")}
-              className={`px-4 py-2 rounded-md transition-all ${
-                activeSection === "antecedentes"
+              className={`px-4 py-2 rounded-md transition-all ${activeSection === "antecedentes"
                   ? "bg-purple-600 text-white font-semibold"
                   : "text-foreground hover:text-primary hover:bg-muted"
-              }`}
+                }`}
             >
               Antecedentes
             </button>
@@ -389,12 +384,12 @@ export default function HomePage() {
 
       {/* Testimonials Section */}
       <section id="testimonios" className="py-20">
-      <TestimonialsSection />
+        <TestimonialsSection />
       </section>
 
       {/* FAQ Section */}
       <section id="FAQ" className="py-20">
-      <FAQSection />
+        <FAQSection />
       </section>
 
       {/* Professional Background */}
@@ -544,7 +539,11 @@ export default function HomePage() {
 
       {/* WhatsApp Floating Button */}
       <div className="fixed bottom-6 right-6 z-50">
-        <Link href="/contact">
+        <Link
+          href="https://wa.me/56987146115" //CAMBIAR POR EL NUMERO DE WHATSAPP DE LA CLINICA
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           <Button
             size="lg"
             className="bg-green-500 hover:bg-green-600 text-white rounded-full w-14 h-14 p-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110"
@@ -554,6 +553,7 @@ export default function HomePage() {
           </Button>
         </Link>
       </div>
+
     </div>
   )
 }

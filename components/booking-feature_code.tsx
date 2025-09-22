@@ -1,12 +1,3 @@
-// booking_feature_code.tsx
-// Este archivo contiene el código completo para añadir un sistema de reservas
-// basado en la página de formulario de consulta existente. Incluye:
-// 1. Componente BookingForm (similar a ContactForm) para escoger fecha,
-//    mostrar horarios disponibles y reservar una cita.
-// 2. Página AgendaPage que muestra el componente BookingForm.
-// 3. API route para listar horarios disponibles y reservar citas.
-
-// ========== 1. Componente BookingForm (components/booking-form.tsx) ==========
 
 "use client"
 
@@ -34,6 +25,8 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import { Calendar } from "@/components/ui/calendar"
 import { format } from "date-fns"
+import { Loader2 } from "lucide-react"
+
 
 // Definición de esquema de validación para el formulario de reserva.
 // Reutiliza el patrón usado en ContactForm y añade selección de fecha y horario.
@@ -51,6 +44,7 @@ export function BookingForm() {
   const [availableSlots, setAvailableSlots] = useState<any[]>([])
   const [selectedSlot, setSelectedSlot] = useState<any | null>(null)
   const { toast } = useToast()
+  const [selectedTherapist, setSelectedTherapist] = useState<{ id: string; name: string } | null>(null);
 
   // Inicializar react-hook-form con el esquema de validación
   const form = useForm<BookingFormData>({
@@ -61,6 +55,7 @@ export function BookingForm() {
       telefono: "",
     },
   })
+  const { isSubmitting } = form.formState
 
   // Efecto para cargar horarios disponibles cuando cambia la fecha seleccionada
   useEffect(() => {
@@ -116,7 +111,12 @@ export function BookingForm() {
   }, [selectedDate, selectedSlot, toast])
 
 
-
+  function buildFechaISO(fecha: Date, hhmmss: string) {
+    const [hh, mm, ss = "00"] = hhmmss.split(":");
+    const dia = format(fecha, "yyyy-MM-dd");
+    // Chile (America/Santiago) -03:00 la mayor parte del año; ajusta si manejas horario de verano
+    return `${dia}T${hh}:${mm}:${ss}-03:00`;
+  }
 
   // Envía la reserva al servidor
   const onSubmit = async (values: BookingFormData) => {
@@ -128,10 +128,19 @@ export function BookingForm() {
       })
       return
     }
+
+    const selectedTherapist = therapists.find((t) => String(t.id) === values.therapist_id);
+
+    const fechaISO = buildFechaISO(selectedDate.from, selectedSlot.hora_inicio);
+
     const payload = {
-      ...values,
-      fecha: format(selectedDate.from, "yyyy-MM-dd"),
-      hora_inicio: selectedSlot.hora_inicio,
+      therapist_id: form.getValues("therapist_id"),           // opcional
+      terapeutaNombre: therapists.find(t => String(t.id) === form.getValues("therapist_id"))?.name, // opcional para el correo
+      nombre: form.getValues("nombre"),
+      email: form.getValues("email"),
+      telefono: form.getValues("telefono"),
+      fecha: format(selectedDate.from!, "yyyy-MM-dd"),
+      hora_inicio: selectedSlot.hora_inicio,  // "HH:mm:ss"
       hora_fin: selectedSlot.hora_fin,
     }
     try {
@@ -285,7 +294,21 @@ export function BookingForm() {
                   Cita seleccionada: {selectedSlot.hora_inicio} - {selectedSlot.hora_fin} del {format(selectedDate.from, "dd/MM/yyyy")}
                 </p>
               </div>
-              <Button type="submit">Reservar cita</Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                aria-busy={isSubmitting}
+                className="min-w-40"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Reservando...
+                  </>
+                ) : (
+                  "Reservar cita"
+                )}
+              </Button>
             </form>
           </Form>
         )}
